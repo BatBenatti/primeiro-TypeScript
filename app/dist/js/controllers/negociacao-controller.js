@@ -9,13 +9,14 @@ import { Negociacao } from "../models/negociacao.js";
 import { Negociacoes } from "../models/negociacoes.js";
 import { MensagemView } from "../views/mensagem-view.js";
 import { NegociacoesView } from "../views/negociacoes-view.js";
-import { logarTempoDeExecucao } from "../decorators/logar-tempo-de-execucao.js";
 import { domInjector } from "../decorators/dom-injector.js";
+import { NegociacoesServices } from "../services/negociacoes-services.js";
 export class NegociacaoController {
     constructor() {
         this.negociacoes = new Negociacoes();
         this.negociacoesView = new NegociacoesView("#negociacoesView", true);
         this.mensagemView = new MensagemView("#mensagemView");
+        this.negociacoesService = new NegociacoesServices();
         this.negociacoesView.update(this.negociacoes);
     }
     adiciona() {
@@ -25,11 +26,26 @@ export class NegociacaoController {
             return;
         }
         this.negociacoes.adiciona(negociacao);
+        console.log(JSON.stringify(this.negociacoes));
         this.limparFormulario();
         this.atualizaView();
     }
     importaDados() {
-        alert('oi');
+        this.negociacoesService
+            .obterNegociacoesDoDia()
+            .then((negociacoesDeHoje) => {
+            return negociacoesDeHoje.filter((negociacoesDeHoje) => {
+                return !this.negociacoes
+                    .lista()
+                    .some((negociacao) => negociacao.ehIgual(negociacoesDeHoje));
+            });
+        })
+            .then((negociacoesDeHoje) => {
+            for (let negociacao of negociacoesDeHoje) {
+                this.negociacoes.adiciona(negociacao);
+            }
+            this.negociacoesView.update(this.negociacoes);
+        });
     }
     ehDiaUtil(data) {
         return (data.getDay() > DiasDaSemana.DOMINGO &&
@@ -55,6 +71,4 @@ __decorate([
 __decorate([
     domInjector("#valor")
 ], NegociacaoController.prototype, "inputValor", void 0);
-__decorate([
-    logarTempoDeExecucao()
-], NegociacaoController.prototype, "adiciona", null);
+//# sourceMappingURL=negociacao-controller.js.map
